@@ -1,0 +1,5 @@
+*.gpg
+*.swp
+*.swo
+*~
+__pycache__/

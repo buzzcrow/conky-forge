@@ -1,0 +1,137 @@
+-- w-2235 u20.04 
+conky.config = {
+    -- Position & Size
+    alignment = 'top_right',
+    gap_x = 5,
+    gap_y = 5,
+    minimum_width = 360,
+    maximum_width = 360,
+    xinerama_head = 1,
+
+    -- Window
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_type = 'normal',
+    own_window_transparent = false,
+    own_window_argb_visual = true,
+    own_window_argb_value = 230,
+    own_window_colour = '#1a1a1a',
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+
+    -- Borders & Drawing
+    border_width = 0,
+    draw_borders = false,
+    draw_graph_borders = true,
+    draw_outline = false,
+    draw_shades = false,
+    stippled_borders = 0,
+
+    -- Font
+    use_xft = true,
+    xftalpha = 1,
+    font = 'DejaVu Sans Mono:size=10',
+
+    -- Behavior
+    background = true,
+    double_buffer = true,
+    no_buffers = true,
+    cpu_avg_samples = 2,
+    net_avg_samples = 2,
+    update_interval = 2.0,
+    uppercase = false,
+    use_spacer = 'none',
+    extra_newline = false,
+    short_units = true,
+    max_user_text = 65536,
+
+    -- Output
+    out_to_console = false,
+    out_to_ncurses = false,
+    out_to_stderr = false,
+    out_to_x = true,
+
+    -- Colors
+    default_color = '#c8c8c8',
+    color1 = '#ff8c00',
+    color2 = '#e07800',
+    color3 = '#808080',
+    color4 = '#7ec8e3',
+    color5 = '#ff4444',
+    color6 = '#66cc66',
+}
+
+conky.text = [[
+${color1}${font DejaVu Sans Mono:bold:size=24}${time %H:%M:%S}${font}${color}${alignr}${color3}${font DejaVu Sans Mono:size=13}${time %A}${font}${color}
+${color4}${font DejaVu Sans Mono:size=13}${time %Y-%m-%d}${font}${color}${alignr}${color3}${font Noto Sans CJK SC:size=10}${execi 3600 python3 /cjdata/cpp/conkyrc-main/scripts/lunar.py}${font}${color}
+${color3}${hr 1}${color}
+${color1}${font DejaVu Sans Mono:bold:size=13}SYSTEM${font}${color}
+${color3}${hr 1}${color}
+${color3}Host${color}${goto 132}${nodename}
+${color3}OS${color}${goto 132}${execi 3600 lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d'"' -f2}
+${color3}Kernel${color}${goto 132}${kernel}
+${color3}Uptime${color}${goto 132}${color4}${uptime}${color}
+${color3}Load${color}${goto 132}${color4}${loadavg}${color}
+${color3}Processes${color}${goto 132}${color4}${processes}${color} total${goto 314}${color4}${running_processes}${color} running
+${color3}RAM${color}${goto 132}${if_match ${memperc} > 80}${color5}${else}${if_match ${memperc} > 30}${color4}${else}${color6}${endif}${endif}${mem} / ${memmax}${alignr}${memperc}%${color}
+${color3}${membar 7}${color}
+${color3}Public IP${color}${goto 132}${execi 300 curl -s --max-time 5 ifconfig.me}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=13}CPU${font}${color}  ${color3}${font DejaVu Sans Mono:size=9}Intel Xeon W-2235 @ 3.80GHz  6C/12T${font}${color}
+${color3}${hr 1}${color}
+${color3}Total${color}${goto 132}${if_match ${cpu cpu0} > 80}${color5}${else}${if_match ${cpu cpu0} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu0}%${color}${goto 254}${color3}Core 2${color}${goto 326}${if_match ${hwmon 2 temp 4} > 76}${color5}${else}${if_match ${hwmon 2 temp 4} > 30}${color4}${else}${color6}${endif}${endif}${hwmon 2 temp 4}°C${color}
+${color3}${cpugraph cpu0 34,360 4a9ab8 7ec8e3 -t}${color}
+${voffset 2}\
+${color3}C1${color}${goto 36}${color3}${cpubar cpu1 7,138}${color}${goto 178}${if_match ${cpu cpu1} > 80}${color5}${else}${if_match ${cpu cpu1} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu1}%${color}${goto 222}${color3}${cpubar cpu7 7,138}${color}${goto 366}${if_match ${cpu cpu7} > 80}${color5}${else}${if_match ${cpu cpu7} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu7}%${color}${alignr}${if_match ${freq 1} > 3680}${color5}${else}${if_match ${freq 1} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 1}G${color}
+${color3}C2${color}${goto 36}${color3}${cpubar cpu2 7,138}${color}${goto 178}${if_match ${cpu cpu2} > 80}${color5}${else}${if_match ${cpu cpu2} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu2}%${color}${goto 222}${color3}${cpubar cpu8 7,138}${color}${goto 366}${if_match ${cpu cpu8} > 80}${color5}${else}${if_match ${cpu cpu8} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu8}%${color}${alignr}${if_match ${freq 2} > 3680}${color5}${else}${if_match ${freq 2} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 2}G${color}
+${color3}C3${color}${goto 36}${color3}${cpubar cpu3 7,138}${color}${goto 178}${if_match ${cpu cpu3} > 80}${color5}${else}${if_match ${cpu cpu3} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu3}%${color}${goto 222}${color3}${cpubar cpu9 7,138}${color}${goto 366}${if_match ${cpu cpu9} > 80}${color5}${else}${if_match ${cpu cpu9} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu9}%${color}${alignr}${if_match ${freq 3} > 3680}${color5}${else}${if_match ${freq 3} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 3}G${color}
+${color3}C4${color}${goto 36}${color3}${cpubar cpu4 7,138}${color}${goto 178}${if_match ${cpu cpu4} > 80}${color5}${else}${if_match ${cpu cpu4} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu4}%${color}${goto 222}${color3}${cpubar cpu10 7,138}${color}${goto 366}${if_match ${cpu cpu10} > 80}${color5}${else}${if_match ${cpu cpu10} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu10}%${color}${alignr}${if_match ${freq 4} > 3680}${color5}${else}${if_match ${freq 4} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 4}G${color}
+${color3}C5${color}${goto 36}${color3}${cpubar cpu5 7,138}${color}${goto 178}${if_match ${cpu cpu5} > 80}${color5}${else}${if_match ${cpu cpu5} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu5}%${color}${goto 222}${color3}${cpubar cpu11 7,138}${color}${goto 366}${if_match ${cpu cpu11} > 80}${color5}${else}${if_match ${cpu cpu11} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu11}%${color}${alignr}${if_match ${freq 5} > 3680}${color5}${else}${if_match ${freq 5} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 5}G${color}
+${color3}C6${color}${goto 36}${color3}${cpubar cpu6 7,138}${color}${goto 178}${if_match ${cpu cpu6} > 80}${color5}${else}${if_match ${cpu cpu6} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu6}%${color}${goto 222}${color3}${cpubar cpu12 7,138}${color}${goto 366}${if_match ${cpu cpu12} > 80}${color5}${else}${if_match ${cpu cpu12} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu12}%${color}${alignr}${if_match ${freq 6} > 3680}${color5}${else}${if_match ${freq 6} > 1380}${color4}${else}${color6}${endif}${endif}${freq_g 6}G${color}
+${voffset 4}\
+${color3}Top Processes${alignr}CPU%${color}
+${color4} ${top name 1}${alignr}${top cpu 1}%${color}
+${color3} ${top name 2}${alignr}${top cpu 2}%${color}
+${color3} ${top name 3}${alignr}${top cpu 3}%${color}
+${color3} ${top name 4}${alignr}${top cpu 4}%${color}
+${color3} ${top name 5}${alignr}${top cpu 5}%${color}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=13}DISK${font}${color}
+${color3}${hr 1}${color}
+${color4}/${color}  ${color3}PC711 NVMe SK hynix 1TB · nvme0n1${color}
+${color3}${fs_bar 7 /}${color}
+${color3}Used${color} ${if_match ${fs_used_perc /} > 80}${color5}${else}${if_match ${fs_used_perc /} > 30}${color4}${else}${color6}${endif}${endif}${fs_used /} / ${fs_size /}${alignr}${fs_used_perc /}%${color}
+${color3}Read${color}${goto 132}${color4}${diskio_read /dev/nvme0n1}${color}${goto 254}${color3}Write${color}${goto 338}${color4}${diskio_write /dev/nvme0n1}${color}
+${color3}${diskiograph_read /dev/nvme0n1 24,156 4a9ab8 7ec8e3 -t -l}${color}${goto 204}${color3}${diskiograph_write /dev/nvme0n1 24,156 4a9ab8 7ec8e3 -t -l}${color}
+${voffset 4}\
+${color4}/cjdata${color}  ${color3}PC711 NVMe SK hynix 1TB · nvme0n1${color}
+${color3}${fs_bar 7 /cjdata}${color}
+${color3}Used${color} ${if_match ${fs_used_perc /cjdata} > 80}${color5}${else}${if_match ${fs_used_perc /cjdata} > 30}${color4}${else}${color6}${endif}${endif}${fs_used /cjdata} / ${fs_size /cjdata}${alignr}${fs_used_perc /cjdata}%${color}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=13}NETWORK${font}${color}
+${color3}${hr 1}${color}
+${color4}eno1${color}  ${color3}Ethernet${color}${alignr}${if_up eno1}${color6}UP${color}${else}${color5}DOWN${color}${endif}
+${if_up eno1}\
+${color3}IP${color}${goto 132}${addr eno1}
+${color3}Down${color}${goto 132}${if_match ${downspeedf eno1} > 97}${color5}${else}${if_match ${downspeedf eno1} > 36}${color4}${else}${color6}${endif}${endif}${downspeed eno1}${color}${goto 254}${color3}Up${color}${goto 338}${if_match ${upspeedf eno1} > 97}${color5}${else}${if_match ${upspeedf eno1} > 36}${color4}${else}${color6}${endif}${endif}${upspeed eno1}${color}
+${color3}${downspeedgraph eno1 24,156 4a9ab8 7ec8e3 -l}${color}${goto 204}${color3}${upspeedgraph eno1 24,156 4a9ab8 7ec8e3 -l}${color}
+${endif}\
+${color4}lo${color}  ${color3}Loopback${color}${alignr}${if_up lo}${color6}UP${color}${else}${color5}DOWN${color}${endif}
+${if_up lo}\
+${color3}IP${color}${goto 132}${addr lo}
+${color3}Down${color}${goto 132}${if_match ${downspeedf lo} > 97}${color5}${else}${if_match ${downspeedf lo} > 36}${color4}${else}${color6}${endif}${endif}${downspeed lo}${color}${goto 254}${color3}Up${color}${goto 338}${if_match ${upspeedf lo} > 97}${color5}${else}${if_match ${upspeedf lo} > 36}${color4}${else}${color6}${endif}${endif}${upspeed lo}${color}
+${color3}${downspeedgraph lo 24,156 4a9ab8 7ec8e3 -l}${color}${goto 204}${color3}${upspeedgraph lo 24,156 4a9ab8 7ec8e3 -l}${color}
+${endif}\
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=13}GPU${font}${color}  ${color3}${font DejaVu Sans Mono:size=9}Quadro P2200${font}${color}
+${color3}${hr 1}${color}
+${execi 5 bash /cjdata/cpp/conkyrc-main/scripts/gpu_stats.sh}
+${color3}Temp${color}${goto 132}${if_match ${exec cat /tmp/conky-gpu/temp} > 75}${color5}${else}${if_match ${exec cat /tmp/conky-gpu/temp} > 30}${color4}${else}${color6}${endif}${endif}${exec cat /tmp/conky-gpu/temp}°C${color}${goto 254}${color3}Fan${color}${goto 338}${if_match ${exec cat /tmp/conky-gpu/fan} > 80}${color5}${else}${if_match ${exec cat /tmp/conky-gpu/fan} > 30}${color4}${else}${color6}${endif}${endif}${exec cat /tmp/conky-gpu/fan}%${color}
+${color3}GPU Load${color}${goto 132}${if_match ${exec cat /tmp/conky-gpu/gpu_util} > 80}${color5}${else}${if_match ${exec cat /tmp/conky-gpu/gpu_util} > 30}${color4}${else}${color6}${endif}${endif}${exec cat /tmp/conky-gpu/gpu_util}%${color}
+${color3}${execigraph 5 "cat /tmp/conky-gpu/gpu_util" 34,360 4a9ab8 7ec8e3 -t 100}${color}
+${color3}VRAM${color}${goto 132}${if_match ${exec cat /tmp/conky-gpu/mem_util} > 80}${color5}${else}${if_match ${exec cat /tmp/conky-gpu/mem_util} > 30}${color4}${else}${color6}${endif}${endif}${exec cat /tmp/conky-gpu/mem_used}${color} / ${exec cat /tmp/conky-gpu/mem_total} MiB
+${color3}${execibar 5 cat /tmp/conky-gpu/mem_util}${color}
+${color3}Power${color}${goto 132}${if_match ${exec cat /tmp/conky-gpu/power} > 60}${color5}${else}${if_match ${exec cat /tmp/conky-gpu/power} > 22}${color4}${else}${color6}${endif}${endif}${exec cat /tmp/conky-gpu/power} W${color}${goto 254}${color3}Driver${color}${goto 338}${exec cat /tmp/conky-gpu/driver}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=13}WALLPAPER${font}${color}  ${color3}${font DejaVu Sans Mono:size=9}Bing Daily${font}${color}${alignr}${color4}${execi 60 python3 /cjdata/cpp/conkyrc-main/scripts/bing_wallpaper.py --check-rotate}${color}
+${color3}${hr 1}${color}
+${font Noto Sans CJK SC:size=10}${color4}${exec cat /home/cj/.cache/bing-wallpaper/title.txt}${color}${font}${alignr}${color3}${exec cat /home/cj/.cache/bing-wallpaper/cur_date.txt}${color}
+${font Noto Sans CJK SC:size=9}${color3}${exec cat /home/cj/.cache/bing-wallpaper/copyright.txt}${color}${font}
+${color4}${exec cat /home/cj/.cache/bing-wallpaper/next1_countdown.txt}${color}${goto 132}${font Noto Sans CJK SC:size=9}${exec cat /home/cj/.cache/bing-wallpaper/next1_title.txt}${font}
+${color4}${exec cat /home/cj/.cache/bing-wallpaper/next2_countdown.txt}${color}${goto 132}${font Noto Sans CJK SC:size=9}${exec cat /home/cj/.cache/bing-wallpaper/next2_title.txt}${font}
+${voffset 5}
+]]

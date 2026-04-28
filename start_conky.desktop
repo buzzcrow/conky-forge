@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Conky System Monitor
+Comment=Auto-generated conky system monitor
+Exec=/cpp/conkyrc/start_conky.sh
+Terminal=false
+Hidden=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
