@@ -77,6 +77,27 @@ nic:veth1234       # skip container veth
 
 Supported types: `disk`, `nic`.
 
+### Per-Host Blacklist
+
+When sharing the repo across multiple PCs via git, use per-host override files
+to avoid conflicts. The generator automatically loads `blacklist-<hostname>.conf`
+and merges it with the base `blacklist.conf`:
+
+- **`blacklist.conf`** — common entries shared across all PCs (tracked in git)
+- **`blacklist-<hostname>.conf`** — per-PC overrides (gitignored)
+
+```bash
+# Find your hostname
+hostname
+
+# Create a per-host override
+cp blacklist.conf blacklist-$(hostname).conf
+# Edit it with PC-specific entries (e.g. Windows drives, extra NICs)
+```
+
+The per-host files are gitignored (`blacklist-*.conf` in `.gitignore`), so each
+PC keeps its own blacklist without interfering with git sync.
+
 ## Color Schemes
 
 | Name | Accent |

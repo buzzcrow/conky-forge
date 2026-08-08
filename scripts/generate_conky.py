@@ -15,6 +15,7 @@ import os
 import random
 import re
 import shutil
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -256,6 +257,10 @@ def detect_disks(blacklist):
         fstype = parts[1]
         size = parts[2]
         mount = parts[3]
+
+        # Skip boot/EFI partitions (not useful to monitor)
+        if mount.startswith("/boot"):
+            continue
 
         # Extract base device name
         dev_name = re.sub(r"p?\d+$", "", os.path.basename(source))
@@ -858,20 +863,38 @@ def gen_wallpaper_section(scale, cjk_font):
 
 
 def load_blacklist(path):
-    """Load blacklist file. Format: type:name (e.g., disk:nvme0n1, nic:enp39s0)."""
+    """Load blacklist file. Format: type:name (e.g., disk:nvme0n1, nic:enp39s0).
+
+    Loads the base blacklist file, then merges a per-host override file
+    (blacklist-<hostname>.conf) if it exists in the same directory.
+    This lets multiple PCs share the repo via git while keeping
+    host-specific blacklists separate.
+    """
     bl = {"disk": set(), "nic": set()}
-    if not path or not os.path.exists(path):
-        return bl
-    for line in Path(path).read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" in line:
-            typ, name = line.split(":", 1)
-            typ = typ.strip().lower()
-            name = name.strip()
-            if typ in bl:
-                bl[typ].add(name)
+
+    def _load_one(p):
+        if not p or not os.path.exists(p):
+            return
+        for line in Path(p).read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if ":" in line:
+                typ, name = line.split(":", 1)
+                typ = typ.strip().lower()
+                name = name.strip()
+                if typ in bl:
+                    bl[typ].add(name)
+
+    # Base blacklist (shared, tracked in git)
+    _load_one(path)
+
+    # Per-host override (gitignored, machine-specific)
+    if path:
+        base = Path(path)
+        host_file = base.parent / f"blacklist-{socket.gethostname()}.conf"
+        _load_one(host_file)
+
     return bl
 
 
@@ -894,8 +917,11 @@ def main():
         scheme = random.choice(list(SCHEMES.values()))
     print(f"Color scheme: {scheme['name']}")
 
-    # Load blacklist
+    # Load blacklist (base + per-host override)
     bl = load_blacklist(args.blacklist)
+    host_file = Path(args.blacklist).parent / f"blacklist-{socket.gethostname()}.conf"
+    if host_file.exists():
+        print(f"Host override: {host_file.name}")
     if bl["disk"] or bl["nic"]:
         print(f"Blacklist: disks={bl['disk']}, nics={bl['nic']}")
 
