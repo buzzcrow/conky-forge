@@ -1,0 +1,157 @@
+conky.config = {
+    -- Position & Size
+    alignment = 'top_right',
+    gap_x = 5,
+    gap_y = 40,
+    minimum_width = 460,
+    maximum_width = 460,
+
+    -- Window
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_type = 'desktop',
+    own_window_transparent = false,
+    own_window_argb_visual = true,
+    own_window_argb_value = 230,
+    own_window_colour = '#1a1a1a',
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+
+    -- Borders & Drawing
+    border_width = 0,
+    draw_borders = false,
+    draw_graph_borders = true,
+    draw_outline = false,
+    draw_shades = false,
+    stippled_borders = 0,
+
+    -- Font
+    use_xft = true,
+    xftalpha = 1,
+    font = 'DejaVu Sans Mono:size=12',
+
+    -- Behavior
+    background = true,
+    double_buffer = true,
+    no_buffers = true,
+    cpu_avg_samples = 2,
+    net_avg_samples = 2,
+    update_interval = 2.0,
+    uppercase = false,
+    use_spacer = 'none',
+    extra_newline = false,
+    short_units = true,
+    max_user_text = 65536,
+
+    -- Output
+    out_to_console = false,
+    out_to_ncurses = false,
+    out_to_stderr = false,
+    out_to_x = true,
+
+    -- Colors
+    default_color = '#c8c8c8',
+    color1 = '#ef5350',
+    color2 = '#d32f2f',
+    color3 = '#808080',
+    color4 = '#81d4fa',
+    color5 = '#ff6659',
+    color6 = '#66cc66',
+}
+
+conky.text = [[
+${color1}${font DejaVu Sans Mono:bold:size=31}${time %H:%M:%S}${font}${color}${alignr}${color3}${font DejaVu Sans Mono:size=15}${time %A}${font}${color}
+${color4}${font DejaVu Sans Mono:size=15}${time %Y-%m-%d}${font}${color}${alignr}${color3}${font Noto Sans CJK SC:size=12}${execi 3600 python3 /nv/cpp/conky-forge/scripts/lunar.py}${font}${color}
+${color3}${hr 1}${color}
+${color1}${font DejaVu Sans Mono:bold:size=15}SYSTEM${font}${color}
+${color3}${hr 1}${color}
+${color3}Host${color}${goto 132}${nodename}
+${color3}OS${color}${goto 132}${execi 3600 lsb_release -ds 2>/dev/null || grep PRETTY_NAME /etc/os-release | cut -d'"' -f2}
+${color3}Kernel${color}${goto 132}${kernel}
+${color3}Uptime${color}${goto 132}${color4}${uptime}${color}
+${color3}Load${color}${goto 132}${color4}${loadavg}${color}
+${color3}Processes${color}${goto 132}${color4}${processes}${color} total${goto 314}${color4}${running_processes}${color} running
+${color3}RAM${color}${goto 132}${if_match ${memperc} > 80}${color5}${else}${if_match ${memperc} > 30}${color4}${else}${color6}${endif}${endif}${mem} / ${memmax}${alignr}${memperc}%${color}
+${color3}${membar 10}${color}
+${color3}Public IP${color}${goto 132}${execi 300 curl -s --max-time 5 ifconfig.me}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=15}CPU${font}${color}  ${color3}${font DejaVu Sans Mono:size=10}Intel Core i9-7960X @ 2.80GHz  16C/32T${font}${color}
+${color3}${hr 1}${color}
+${color3}Total${color}${goto 132}${if_match ${cpu cpu0} > 80}${color5}${else}${if_match ${cpu cpu0} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu0}%${color}${goto 254}${color3}Core 12${color}${goto 326}${if_match ${hwmon 4 temp 14} > 76}${color5}${else}${if_match ${hwmon 4 temp 14} > 30}${color4}${else}${color6}${endif}${endif}${hwmon 4 temp 14}°C${color}
+${color3}${cpugraph cpu0 50,460 4a9fc8 81d4fa -t}${color}
+${voffset 2}\
+${color3}C01${color}${goto 36}${color3}${cpubar cpu1 10,138}${color}${goto 178}${if_match ${cpu cpu1} > 80}${color5}${else}${if_match ${cpu cpu1} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu1}%${color}${goto 222}${color3}${cpubar cpu17 10,138}${color}${goto 366}${if_match ${cpu cpu17} > 80}${color5}${else}${if_match ${cpu cpu17} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu17}%${color}${alignr}${if_match ${freq 1} > 3360}${color5}${else}${if_match ${freq 1} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 1}G${color}
+${color3}C02${color}${goto 36}${color3}${cpubar cpu2 10,138}${color}${goto 178}${if_match ${cpu cpu2} > 80}${color5}${else}${if_match ${cpu cpu2} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu2}%${color}${goto 222}${color3}${cpubar cpu18 10,138}${color}${goto 366}${if_match ${cpu cpu18} > 80}${color5}${else}${if_match ${cpu cpu18} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu18}%${color}${alignr}${if_match ${freq 2} > 3360}${color5}${else}${if_match ${freq 2} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 2}G${color}
+${color3}C03${color}${goto 36}${color3}${cpubar cpu3 10,138}${color}${goto 178}${if_match ${cpu cpu3} > 80}${color5}${else}${if_match ${cpu cpu3} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu3}%${color}${goto 222}${color3}${cpubar cpu19 10,138}${color}${goto 366}${if_match ${cpu cpu19} > 80}${color5}${else}${if_match ${cpu cpu19} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu19}%${color}${alignr}${if_match ${freq 3} > 3360}${color5}${else}${if_match ${freq 3} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 3}G${color}
+${color3}C04${color}${goto 36}${color3}${cpubar cpu4 10,138}${color}${goto 178}${if_match ${cpu cpu4} > 80}${color5}${else}${if_match ${cpu cpu4} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu4}%${color}${goto 222}${color3}${cpubar cpu20 10,138}${color}${goto 366}${if_match ${cpu cpu20} > 80}${color5}${else}${if_match ${cpu cpu20} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu20}%${color}${alignr}${if_match ${freq 4} > 3360}${color5}${else}${if_match ${freq 4} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 4}G${color}
+${color3}C05${color}${goto 36}${color3}${cpubar cpu5 10,138}${color}${goto 178}${if_match ${cpu cpu5} > 80}${color5}${else}${if_match ${cpu cpu5} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu5}%${color}${goto 222}${color3}${cpubar cpu21 10,138}${color}${goto 366}${if_match ${cpu cpu21} > 80}${color5}${else}${if_match ${cpu cpu21} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu21}%${color}${alignr}${if_match ${freq 5} > 3360}${color5}${else}${if_match ${freq 5} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 5}G${color}
+${color3}C06${color}${goto 36}${color3}${cpubar cpu6 10,138}${color}${goto 178}${if_match ${cpu cpu6} > 80}${color5}${else}${if_match ${cpu cpu6} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu6}%${color}${goto 222}${color3}${cpubar cpu22 10,138}${color}${goto 366}${if_match ${cpu cpu22} > 80}${color5}${else}${if_match ${cpu cpu22} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu22}%${color}${alignr}${if_match ${freq 6} > 3360}${color5}${else}${if_match ${freq 6} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 6}G${color}
+${color3}C07${color}${goto 36}${color3}${cpubar cpu7 10,138}${color}${goto 178}${if_match ${cpu cpu7} > 80}${color5}${else}${if_match ${cpu cpu7} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu7}%${color}${goto 222}${color3}${cpubar cpu23 10,138}${color}${goto 366}${if_match ${cpu cpu23} > 80}${color5}${else}${if_match ${cpu cpu23} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu23}%${color}${alignr}${if_match ${freq 7} > 3360}${color5}${else}${if_match ${freq 7} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 7}G${color}
+${color3}C08${color}${goto 36}${color3}${cpubar cpu8 10,138}${color}${goto 178}${if_match ${cpu cpu8} > 80}${color5}${else}${if_match ${cpu cpu8} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu8}%${color}${goto 222}${color3}${cpubar cpu24 10,138}${color}${goto 366}${if_match ${cpu cpu24} > 80}${color5}${else}${if_match ${cpu cpu24} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu24}%${color}${alignr}${if_match ${freq 8} > 3360}${color5}${else}${if_match ${freq 8} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 8}G${color}
+${color3}C09${color}${goto 36}${color3}${cpubar cpu9 10,138}${color}${goto 178}${if_match ${cpu cpu9} > 80}${color5}${else}${if_match ${cpu cpu9} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu9}%${color}${goto 222}${color3}${cpubar cpu25 10,138}${color}${goto 366}${if_match ${cpu cpu25} > 80}${color5}${else}${if_match ${cpu cpu25} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu25}%${color}${alignr}${if_match ${freq 9} > 3360}${color5}${else}${if_match ${freq 9} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 9}G${color}
+${color3}C10${color}${goto 36}${color3}${cpubar cpu10 10,138}${color}${goto 178}${if_match ${cpu cpu10} > 80}${color5}${else}${if_match ${cpu cpu10} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu10}%${color}${goto 222}${color3}${cpubar cpu26 10,138}${color}${goto 366}${if_match ${cpu cpu26} > 80}${color5}${else}${if_match ${cpu cpu26} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu26}%${color}${alignr}${if_match ${freq 10} > 3360}${color5}${else}${if_match ${freq 10} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 10}G${color}
+${color3}C11${color}${goto 36}${color3}${cpubar cpu11 10,138}${color}${goto 178}${if_match ${cpu cpu11} > 80}${color5}${else}${if_match ${cpu cpu11} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu11}%${color}${goto 222}${color3}${cpubar cpu27 10,138}${color}${goto 366}${if_match ${cpu cpu27} > 80}${color5}${else}${if_match ${cpu cpu27} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu27}%${color}${alignr}${if_match ${freq 11} > 3360}${color5}${else}${if_match ${freq 11} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 11}G${color}
+${color3}C12${color}${goto 36}${color3}${cpubar cpu12 10,138}${color}${goto 178}${if_match ${cpu cpu12} > 80}${color5}${else}${if_match ${cpu cpu12} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu12}%${color}${goto 222}${color3}${cpubar cpu28 10,138}${color}${goto 366}${if_match ${cpu cpu28} > 80}${color5}${else}${if_match ${cpu cpu28} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu28}%${color}${alignr}${if_match ${freq 12} > 3360}${color5}${else}${if_match ${freq 12} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 12}G${color}
+${color3}C13${color}${goto 36}${color3}${cpubar cpu13 10,138}${color}${goto 178}${if_match ${cpu cpu13} > 80}${color5}${else}${if_match ${cpu cpu13} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu13}%${color}${goto 222}${color3}${cpubar cpu29 10,138}${color}${goto 366}${if_match ${cpu cpu29} > 80}${color5}${else}${if_match ${cpu cpu29} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu29}%${color}${alignr}${if_match ${freq 13} > 3360}${color5}${else}${if_match ${freq 13} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 13}G${color}
+${color3}C14${color}${goto 36}${color3}${cpubar cpu14 10,138}${color}${goto 178}${if_match ${cpu cpu14} > 80}${color5}${else}${if_match ${cpu cpu14} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu14}%${color}${goto 222}${color3}${cpubar cpu30 10,138}${color}${goto 366}${if_match ${cpu cpu30} > 80}${color5}${else}${if_match ${cpu cpu30} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu30}%${color}${alignr}${if_match ${freq 14} > 3360}${color5}${else}${if_match ${freq 14} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 14}G${color}
+${color3}C15${color}${goto 36}${color3}${cpubar cpu15 10,138}${color}${goto 178}${if_match ${cpu cpu15} > 80}${color5}${else}${if_match ${cpu cpu15} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu15}%${color}${goto 222}${color3}${cpubar cpu31 10,138}${color}${goto 366}${if_match ${cpu cpu31} > 80}${color5}${else}${if_match ${cpu cpu31} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu31}%${color}${alignr}${if_match ${freq 15} > 3360}${color5}${else}${if_match ${freq 15} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 15}G${color}
+${color3}C16${color}${goto 36}${color3}${cpubar cpu16 10,138}${color}${goto 178}${if_match ${cpu cpu16} > 80}${color5}${else}${if_match ${cpu cpu16} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu16}%${color}${goto 222}${color3}${cpubar cpu32 10,138}${color}${goto 366}${if_match ${cpu cpu32} > 80}${color5}${else}${if_match ${cpu cpu32} > 30}${color4}${else}${color6}${endif}${endif}${cpu cpu32}%${color}${alignr}${if_match ${freq 16} > 3360}${color5}${else}${if_match ${freq 16} > 1260}${color4}${else}${color6}${endif}${endif}${freq_g 16}G${color}
+${voffset 4}\
+${color3}Top Processes${alignr}CPU%${color}
+${color4} ${top name 1}${alignr}${top cpu 1}%${color}
+${color3} ${top name 2}${alignr}${top cpu 2}%${color}
+${color3} ${top name 3}${alignr}${top cpu 3}%${color}
+${color3} ${top name 4}${alignr}${top cpu 4}%${color}
+${color3} ${top name 5}${alignr}${top cpu 5}%${color}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=15}DISK${font}${color}
+${color3}${hr 1}${color}
+${color4}/${color}  ${color3}Fanxiang S790 2TB · nvme0n1${color}
+${color3}${fs_bar 10 /}${color}
+${color3}Used${color} ${if_match ${fs_used_perc /} > 80}${color5}${else}${if_match ${fs_used_perc /} > 30}${color4}${else}${color6}${endif}${endif}${fs_used /} / ${fs_size /}${alignr}${fs_used_perc /}%${color}
+${color3}Read${color}${goto 132}${color4}${diskio_read /dev/nvme0n1}${color}${goto 254}${color3}Write${color}${goto 338}${color4}${diskio_write /dev/nvme0n1}${color}
+${color3}${diskiograph_read /dev/nvme0n1 36,206 4a9fc8 81d4fa -t -l}${color}${goto 254}${color3}${diskiograph_write /dev/nvme0n1 36,206 4a9fc8 81d4fa -t -l}${color}
+${voffset 4}\
+${color4}/home${color}  ${color3}Fanxiang S790 2TB · nvme0n1${color}
+${color3}${fs_bar 10 /home}${color}
+${color3}Used${color} ${if_match ${fs_used_perc /home} > 80}${color5}${else}${if_match ${fs_used_perc /home} > 30}${color4}${else}${color6}${endif}${endif}${fs_used /home} / ${fs_size /home}${alignr}${fs_used_perc /home}%${color}
+${voffset 4}\
+${color4}/nv${color}  ${color3}HS-SSD-C2000 1024G · nvme1n1${color}
+${color3}${fs_bar 10 /nv}${color}
+${color3}Used${color} ${if_match ${fs_used_perc /nv} > 80}${color5}${else}${if_match ${fs_used_perc /nv} > 30}${color4}${else}${color6}${endif}${endif}${fs_used /nv} / ${fs_size /nv}${alignr}${fs_used_perc /nv}%${color}
+${color3}Read${color}${goto 132}${color4}${diskio_read /dev/nvme1n1}${color}${goto 254}${color3}Write${color}${goto 338}${color4}${diskio_write /dev/nvme1n1}${color}
+${color3}${diskiograph_read /dev/nvme1n1 36,206 4a9fc8 81d4fa -t -l}${color}${goto 254}${color3}${diskiograph_write /dev/nvme1n1 36,206 4a9fc8 81d4fa -t -l}${color}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=15}NETWORK${font}${color}
+${color3}${hr 1}${color}
+${color4}wlp4s0${color}  ${color3}WiFi${color}${alignr}${if_up wlp4s0}${color6}UP${color}${else}${color5}DOWN${color}${endif}
+${if_up wlp4s0}\
+${color3}IP${color}${goto 132}${addr wlp4s0}
+${color3}Down${color}${goto 132}${if_match ${downspeedf wlp4s0} > 97}${color5}${else}${if_match ${downspeedf wlp4s0} > 36}${color4}${else}${color6}${endif}${endif}${downspeed wlp4s0}${color}${goto 254}${color3}Up${color}${goto 338}${if_match ${upspeedf wlp4s0} > 97}${color5}${else}${if_match ${upspeedf wlp4s0} > 36}${color4}${else}${color6}${endif}${endif}${upspeed wlp4s0}${color}
+${color3}${downspeedgraph wlp4s0 36,206 4a9fc8 81d4fa -l}${color}${goto 254}${color3}${upspeedgraph wlp4s0 36,206 4a9fc8 81d4fa -l}${color}
+${endif}\
+${color4}eno1${color}  ${color3}Ethernet${color}${alignr}${if_up eno1}${color6}UP${color}${else}${color5}DOWN${color}${endif}
+${if_up eno1}\
+${color3}IP${color}${goto 132}${addr eno1}
+${color3}Down${color}${goto 132}${if_match ${downspeedf eno1} > 97}${color5}${else}${if_match ${downspeedf eno1} > 36}${color4}${else}${color6}${endif}${endif}${downspeed eno1}${color}${goto 254}${color3}Up${color}${goto 338}${if_match ${upspeedf eno1} > 97}${color5}${else}${if_match ${upspeedf eno1} > 36}${color4}${else}${color6}${endif}${endif}${upspeed eno1}${color}
+${color3}${downspeedgraph eno1 36,206 4a9fc8 81d4fa -l}${color}${goto 254}${color3}${upspeedgraph eno1 36,206 4a9fc8 81d4fa -l}${color}
+${endif}\
+${color4}lo${color}  ${color3}Loopback${color}${alignr}${if_up lo}${color6}UP${color}${else}${color5}DOWN${color}${endif}
+${if_up lo}\
+${color3}IP${color}${goto 132}${addr lo}
+${color3}Down${color}${goto 132}${if_match ${downspeedf lo} > 97}${color5}${else}${if_match ${downspeedf lo} > 36}${color4}${else}${color6}${endif}${endif}${downspeed lo}${color}${goto 254}${color3}Up${color}${goto 338}${if_match ${upspeedf lo} > 97}${color5}${else}${if_match ${upspeedf lo} > 36}${color4}${else}${color6}${endif}${endif}${upspeed lo}${color}
+${color3}${downspeedgraph lo 36,206 4a9fc8 81d4fa -l}${color}${goto 254}${color3}${upspeedgraph lo 36,206 4a9fc8 81d4fa -l}${color}
+${endif}\
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=15}GPU${font}${color}  ${color3}${font DejaVu Sans Mono:size=10}NVIDIA GeForce RTX 2080${font}${color}
+${color3}${hr 1}${color}
+${execi 5 bash /nv/cpp/conky-forge/scripts/gpu_stats.sh}
+${color3}Temp${color}${goto 132}${if_match ${cat /tmp/conky-gpu/temp} > 75}${color5}${else}${if_match ${cat /tmp/conky-gpu/temp} > 30}${color4}${else}${color6}${endif}${endif}${cat /tmp/conky-gpu/temp}°C${color}${goto 254}${color3}Fan${color}${goto 338}${if_match ${cat /tmp/conky-gpu/fan} > 80}${color5}${else}${if_match ${cat /tmp/conky-gpu/fan} > 30}${color4}${else}${color6}${endif}${endif}${cat /tmp/conky-gpu/fan}%${color}
+${color3}GPU Load${color}${goto 132}${if_match ${cat /tmp/conky-gpu/gpu_util} > 80}${color5}${else}${if_match ${cat /tmp/conky-gpu/gpu_util} > 30}${color4}${else}${color6}${endif}${endif}${cat /tmp/conky-gpu/gpu_util}%${color}
+${color3}${execigraph 5 "cat /tmp/conky-gpu/gpu_util" 50,460 4a9fc8 81d4fa -t 100}${color}
+${color3}VRAM${color}${goto 132}${if_match ${cat /tmp/conky-gpu/mem_util} > 80}${color5}${else}${if_match ${cat /tmp/conky-gpu/mem_util} > 30}${color4}${else}${color6}${endif}${endif}${cat /tmp/conky-gpu/mem_used}${color} / ${cat /tmp/conky-gpu/mem_total} MiB
+${color3}${execibar 5 cat /tmp/conky-gpu/mem_util}${color}
+${color3}Power${color}${goto 132}${if_match ${cat /tmp/conky-gpu/power} > 240}${color5}${else}${if_match ${cat /tmp/conky-gpu/power} > 90}${color4}${else}${color6}${endif}${endif}${cat /tmp/conky-gpu/power} W${color}${goto 254}${color3}Driver${color}${goto 338}${cat /tmp/conky-gpu/driver}
+${voffset 6}${color1}${font DejaVu Sans Mono:bold:size=15}WALLPAPER${font}${color}  ${color3}${font DejaVu Sans Mono:size=10}Bing Daily${font}${color}${alignr}${color4}${execi 60 python3 /nv/cpp/conky-forge/scripts/bing_wallpaper.py --check-rotate}${color}
+${color3}${hr 1}${color}
+${font Noto Sans CJK SC:size=12}${color4}${cat /home/cj/.cache/bing-wallpaper/title.txt}${color}${font}${alignr}${color3}${cat /home/cj/.cache/bing-wallpaper/cur_date.txt}${color}
+${font Noto Sans CJK SC:size=10}${color3}${cat /home/cj/.cache/bing-wallpaper/copyright.txt}${color}${font}
+${color4}${cat /home/cj/.cache/bing-wallpaper/next1_countdown.txt}${color}${goto 132}${font Noto Sans CJK SC:size=10}${cat /home/cj/.cache/bing-wallpaper/next1_title.txt}${font}
+${color4}${cat /home/cj/.cache/bing-wallpaper/next2_countdown.txt}${color}${goto 132}${font Noto Sans CJK SC:size=10}${cat /home/cj/.cache/bing-wallpaper/next2_title.txt}${font}
+${voffset 5}
+]]
