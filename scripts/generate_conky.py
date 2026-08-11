@@ -560,6 +560,16 @@ def gen_cpu_section(cpu, scheme, scale):
     ghi = scheme["grad_hi"]
 
     has_smt = cpu["threads"] > cpu["cores"]
+
+    # Build per-core temp sensor map: {linux_core_id: temp_index}
+    # Intel coretemp exposes "Core 0".."Core N-1"; AMD k10temp does not.
+    core_temp_map = {}
+    for label, ti in cpu["temp_sensors"].items():
+        m = re.match(r"Core (\d+)$", label)
+        if m:
+            core_temp_map[int(m.group(1))] = ti
+    has_core_temps = len(core_temp_map) > 0
+
     # Frequency thresholds: 30% and 80% of max boost (in MHz, for ${freq})
     freq_lo = int(cpu["max_freq_mhz"] * 0.30)
     freq_hi = int(cpu["max_freq_mhz"] * 0.80)
@@ -586,6 +596,11 @@ def gen_cpu_section(cpu, scheme, scale):
             temp_str = (f"${{goto {g2}}}${{color3}}Tctl${{color}}${{goto {g3}}}"
                         f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
                         f"${{hwmon {hi} temp {ti}}}°C${{color}}")
+        elif "Package id 0" in cpu["temp_sensors"]:
+            ti = cpu["temp_sensors"]["Package id 0"]
+            temp_str = (f"${{goto {g2}}}${{color3}}Pkg${{color}}${{goto {g3}}}"
+                        f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
+                        f"${{hwmon {hi} temp {ti}}}°C${{color}}")
         elif cpu["temp_sensors"]:
             label, ti = next(iter(cpu["temp_sensors"].items()))
             temp_str = (f"${{goto {g2}}}${{color3}}{label}${{color}}${{goto {g3}}}"
@@ -601,17 +616,19 @@ def gen_cpu_section(cpu, scheme, scale):
 
     # Per-core layout positions (hand-tuned at 4K reference)
     if has_smt:
-        # Two bars per line: C01 [bar] XX% [bar] XX% X.XG
-        bar_w = scale.px(138)
+        # Two bars per line: C01 [bar] XX% [bar] XX% X.XG NN°
+        bar_w = scale.px(116)
         g_bar1 = scale.px(36)
-        g_pct1 = scale.px(178)
-        g_bar2 = scale.px(222)
-        g_pct2 = scale.px(366)
+        g_pct1 = scale.px(156)
+        g_bar2 = scale.px(200)
+        g_pct2 = scale.px(322)
+        g_freq = scale.px(370) if has_core_temps else None
     else:
-        # One bar per line: C01 [====long bar====] XX% X.XG
+        # One bar per line: C01 [====long bar====] XX% X.XG NN°
         bar_w = scale.px(300)
         g_bar1 = scale.px(36)
         g_pct1 = scale.px(340)
+        g_freq = scale.px(370) if has_core_temps else None
 
     for gi, group in enumerate(cpu["ccd_groups"]):
         # CCD header (only if multiple groups)
@@ -637,6 +654,17 @@ def gen_cpu_section(cpu, scheme, scale):
             if has_smt and len(core_pair) > 1:
                 t1 = core_pair[1]
                 c1 = t1 + 1
+                # Per-core temp at end (both SMT threads share one physical core temp)
+                temp_str = ""
+                if has_core_temps and t0 in core_temp_map:
+                    hi = cpu["hwmon_idx"]
+                    ti = core_temp_map[t0]
+                    temp_str = (f"${{alignr}}"
+                                f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
+                                f"${{hwmon {hi} temp {ti}}}°${{color}}")
+                freq_part = (f"${{goto {g_freq}}}" if g_freq else "${alignr}") + \
+                            f"{threshold_color(f'${{freq {c0}}}', freq_lo, freq_hi)}" \
+                            f"${{freq_g {c0}}}G${{color}}"
                 lines.append(
                     f"${{color3}}{core_label}${{color}}"
                     f"${{goto {g_bar1}}}${{color3}}${{cpubar cpu{c0} {bh},{bar_w}}}${{color}}"
@@ -645,17 +673,27 @@ def gen_cpu_section(cpu, scheme, scale):
                     f"${{goto {g_bar2}}}${{color3}}${{cpubar cpu{c1} {bh},{bar_w}}}${{color}}"
                     f"${{goto {g_pct2}}}{threshold_color(f'${{cpu cpu{c1}}}', 30, 80)}"
                     f"${{cpu cpu{c1}}}%${{color}}"
-                    f"${{alignr}}{threshold_color(f'${{freq {c0}}}', freq_lo, freq_hi)}"
-                    f"${{freq_g {c0}}}G${{color}}"
+                    f"{freq_part}"
+                    f"{temp_str}"
                 )
             else:
+                temp_str = ""
+                if has_core_temps and t0 in core_temp_map:
+                    hi = cpu["hwmon_idx"]
+                    ti = core_temp_map[t0]
+                    temp_str = (f"${{alignr}}"
+                                f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
+                                f"${{hwmon {hi} temp {ti}}}°${{color}}")
+                freq_part = (f"${{goto {g_freq}}}" if g_freq else "${alignr}") + \
+                            f"{threshold_color(f'${{freq {c0}}}', freq_lo, freq_hi)}" \
+                            f"${{freq_g {c0}}}G${{color}}"
                 lines.append(
                     f"${{color3}}{core_label}${{color}}"
                     f"${{goto {g_bar1}}}${{color3}}${{cpubar cpu{c0} {bh},{bar_w}}}${{color}}"
                     f"${{goto {g_pct1}}}{threshold_color(f'${{cpu cpu{c0}}}', 30, 80)}"
                     f"${{cpu cpu{c0}}}%${{color}}"
-                    f"${{alignr}}{threshold_color(f'${{freq {c0}}}', freq_lo, freq_hi)}"
-                    f"${{freq_g {c0}}}G${{color}}"
+                    f"{freq_part}"
+                    f"{temp_str}"
                 )
 
         if cpu["has_ccds"] and gi < len(cpu["ccd_groups"]) - 1:
