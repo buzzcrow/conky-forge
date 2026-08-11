@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
+sys.path.insert(0, str(SCRIPT_DIR))
 REF_HEIGHT = 2160      # reference display height (4K)
 REF_BODY_FONT = 12     # reference body font size at 4K
 REF_HEADER_FONT = 15
@@ -169,78 +170,26 @@ def read_file(path, default=""):
 # ── Hardware Detection ───────────────────────────────────────────────────────
 
 def detect_cpu():
-    """Detect CPU model, cores, threads, topology, and temperature sensors."""
-    model = ""
-    for line in Path("/proc/cpuinfo").read_text().splitlines():
-        if line.startswith("model name"):
-            model = line.split(":", 1)[1].strip()
-            break
+    """Detect CPU via vendor-specific engine and return a dict for compatibility.
 
-    threads = int(run("nproc", "1"))
-    cores_per_socket = int(run("lscpu | awk '/^Core\\(s\\) per socket:/{print $NF}'", "1"))
-    sockets = int(run("lscpu | awk '/^Socket\\(s\\):/{print $NF}'", "1"))
-    cores = cores_per_socket * sockets
-
-    # Detect CCD groups by L3 cache ID
-    # Each group: {"l3_id": int, "cores": [(first_thread, second_thread), ...]}
-    l3_groups = {}
-    for cpu_dir in sorted(glob.glob("/sys/devices/system/cpu/cpu[0-9]*"),
-                          key=lambda x: int(re.search(r"(\d+)$", x).group())):
-        cpu_id = int(re.search(r"(\d+)$", cpu_dir).group())
-        siblings = read_file(f"{cpu_dir}/topology/thread_siblings_list")
-        if not siblings:
-            continue
-        first = int(siblings.split(",")[0])
-        if cpu_id != first:
-            continue  # only process first thread of each pair
-        try:
-            l3_id = int(read_file(f"{cpu_dir}/cache/index3/id", "0"))
-        except ValueError:
-            l3_id = 0
-        sib_list = [int(x) for x in siblings.split(",")]
-        l3_groups.setdefault(l3_id, []).append(sib_list)
-
-    ccd_groups = []
-    for l3_id in sorted(l3_groups.keys()):
-        ccd_groups.append(l3_groups[l3_id])
-
-    # If only one group, don't label it as CCD
-    has_ccds = len(ccd_groups) > 1
-
-    # Detect hwmon for CPU temp
-    hwmon_idx = None
-    hwmon_driver = None
-    temp_sensors = {}  # label -> temp_index
-    for hwmon_dir in glob.glob("/sys/class/hwmon/hwmon*"):
-        name = read_file(f"{hwmon_dir}/name")
-        if name in ("k10temp", "coretemp"):
-            hwmon_idx = int(re.search(r"(\d+)$", hwmon_dir).group())
-            hwmon_driver = name
-            for label_file in glob.glob(f"{hwmon_dir}/temp*_label"):
-                m = re.search(r"temp(\d+)_label", label_file)
-                if m:
-                    label = read_file(label_file)
-                    temp_sensors[label] = int(m.group(1))
-            # If no labels, try to find any temp input
-            if not temp_sensors:
-                for inp in glob.glob(f"{hwmon_dir}/temp*_input"):
-                    m = re.search(r"temp(\d+)_input", inp)
-                    if m:
-                        temp_sensors.setdefault("CPU", int(m.group(1)))
-            break
-
+    Delegates to engines.detect_cpu_engine() which picks AmdCpuEngine or
+    IntelCpuEngine based on /proc/cpuinfo. The engine handles vendor-specific
+    temp sensor mapping, model name cleanup, and CCD temp keys.
+    """
+    from engines import detect_cpu_engine
+    eng = detect_cpu_engine()
+    eng.detect()
     return {
-        "model": model,
-        "cores": cores,
-        "threads": threads,
-        "ccd_groups": ccd_groups,
-        "has_ccds": has_ccds,
-        "hwmon_idx": hwmon_idx,
-        "hwmon_driver": hwmon_driver,
-        "temp_sensors": temp_sensors,
-        "max_freq_mhz": int(read_file(
-            "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "5000000"
-        )) // 1000,  # KHz → MHz
+        "model": eng.model,
+        "cores": eng.cores,
+        "threads": eng.threads,
+        "ccd_groups": eng.ccd_groups,
+        "has_ccds": eng.has_ccds,
+        "hwmon_idx": eng.hwmon_idx,
+        "hwmon_driver": eng.hwmon_driver,
+        "temp_sensors": eng.temp_sensors,
+        "max_freq_mhz": eng.max_freq_mhz,
+        "_engine": eng,  # keep engine reference for gen_cpu_section
     }
 
 
@@ -547,7 +496,12 @@ def gen_system_section(cpu, proxy, scale):
 
 
 def gen_cpu_section(cpu, scheme, scale):
-    """Generate CPU section with per-core bars and optional CCD grouping."""
+    """Generate CPU section with per-core bars and optional CCD grouping.
+
+    Uses the CPU engine (cpu['_engine']) for vendor-specific behavior:
+    total temp label/key, per-core temp map, CCD temp key, model name cleanup.
+    """
+    eng = cpu["_engine"]
     hf = scale.font(REF_HEADER_FONT)
     sf = scale.font(REF_SMALL_FONT)
     pw = scale.px(REF_PANEL_W)
@@ -560,27 +514,14 @@ def gen_cpu_section(cpu, scheme, scale):
     ghi = scheme["grad_hi"]
 
     has_smt = cpu["threads"] > cpu["cores"]
-
-    # Build per-core temp sensor map: {linux_core_id: temp_index}
-    # Intel coretemp exposes "Core 0".."Core N-1"; AMD k10temp does not.
-    core_temp_map = {}
-    for label, ti in cpu["temp_sensors"].items():
-        m = re.match(r"Core (\d+)$", label)
-        if m:
-            core_temp_map[int(m.group(1))] = ti
-    has_core_temps = len(core_temp_map) > 0
+    core_temp_map = eng.core_temp_map()
+    has_core_temps = eng.has_per_core_temps()
 
     # Frequency thresholds: 30% and 80% of max boost (in MHz, for ${freq})
     freq_lo = int(cpu["max_freq_mhz"] * 0.30)
     freq_hi = int(cpu["max_freq_mhz"] * 0.80)
 
-    # Short model name
-    model_short = cpu["model"]
-    for remove in ("(R)", "(TM)", "Processor", "CPU", "with Radeon Graphics"):
-        model_short = model_short.replace(remove, "")
-    model_short = re.sub(r"\s{2,}", " ", model_short).strip()
-    if len(model_short) > 30:
-        model_short = model_short[:30]
+    model_short = eng.model_short()
 
     lines = []
     lines.append(f"${{voffset 6}}${{color1}}${{font DejaVu Sans Mono:bold:size={hf}}}CPU${{font}}${{color}}  "
@@ -591,14 +532,11 @@ def gen_cpu_section(cpu, scheme, scale):
     temp_str = ""
     if cpu["hwmon_idx"] is not None:
         hi = cpu["hwmon_idx"]
-        if "Tctl" in cpu["temp_sensors"]:
-            ti = cpu["temp_sensors"]["Tctl"]
-            temp_str = (f"${{goto {g2}}}${{color3}}Tctl${{color}}${{goto {g3}}}"
-                        f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
-                        f"${{hwmon {hi} temp {ti}}}°C${{color}}")
-        elif "Package id 0" in cpu["temp_sensors"]:
-            ti = cpu["temp_sensors"]["Package id 0"]
-            temp_str = (f"${{goto {g2}}}${{color3}}Pkg${{color}}${{goto {g3}}}"
+        total_key = eng.total_temp_key()
+        total_label = eng.total_temp_label()
+        if total_key and total_key in cpu["temp_sensors"]:
+            ti = cpu["temp_sensors"][total_key]
+            temp_str = (f"${{goto {g2}}}${{color3}}{total_label}${{color}}${{goto {g3}}}"
                         f"{threshold_color(f'${{hwmon {hi} temp {ti}}}', 30, 76)}"
                         f"${{hwmon {hi} temp {ti}}}°C${{color}}")
         elif cpu["temp_sensors"]:
@@ -638,10 +576,9 @@ def gen_cpu_section(cpu, scheme, scale):
             last_core = group[-1][0]
             temp_part = ""
             if cpu["hwmon_idx"] is not None:
-                # Look for Tccd temp
-                tccd_key = f"Tccd{gi + 1}"
-                if tccd_key in cpu["temp_sensors"]:
-                    ti = cpu["temp_sensors"][tccd_key]
+                ccd_key = eng.ccd_temp_key(gi + 1)
+                if ccd_key and ccd_key in cpu["temp_sensors"]:
+                    ti = cpu["temp_sensors"][ccd_key]
                     temp_part = f"${{alignr}}${{hwmon {cpu['hwmon_idx']} temp {ti}}}°C"
             lines.append(f"${{color1}}{ccd_label}${{color}}  "
                          f"${{color3}}Cores {first_core}\u2013{last_core}${{color}}{temp_part}")
