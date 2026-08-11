@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-engines.py — CPU vendor engines for conky config generation.
+engines.py — CPU vendor engine framework for conky config generation.
 
-Provides a common base class (CpuEngine) with shared detection logic,
-and vendor-specific subclasses (AmdCpuEngine, IntelCpuEngine) that
-override temperature sensor mapping, model name cleanup, and other
-vendor-specific behavior.
+Provides a common base class (CpuEngine) with shared detection logic.
+Vendor-specific subclasses live in separate files:
+  - PCAmd5950.py   → AmdCpuEngine   (AMD Ryzen, k10temp)
+  - PCIntel7960.py → IntelCpuEngine (Intel Core, coretemp)
 
 Usage:
     from engines import detect_cpu_engine
@@ -148,77 +148,15 @@ class CpuEngine:
         return s
 
 
-class AmdCpuEngine(CpuEngine):
-    """AMD Ryzen CPU engine (k10temp driver).
-
-    - Total temp: Tctl
-    - CCD temps: Tccd1, Tccd2, ...
-    - No per-core temperature sensors
-    """
-
-    hwmon_drivers = {"k10temp"}
-
-    def total_temp_label(self):
-        return "Tctl"
-
-    def total_temp_key(self):
-        return "Tctl"
-
-    def ccd_temp_key(self, ccd_idx):
-        return f"Tccd{ccd_idx}"
-
-    def model_short(self):
-        s = self.model
-        for remove in ("(R)", "(TM)", "with Radeon Graphics"):
-            s = s.replace(remove, "")
-        s = re.sub(r"\s{2,}", " ", s).strip()
-        if len(s) > 30:
-            s = s[:30]
-        return s
-
-
-class IntelCpuEngine(CpuEngine):
-    """Intel CPU engine (coretemp driver).
-
-    - Total temp: Package id 0
-    - Per-core temps: Core 0, Core 1, ..., Core N-1
-    - No CCD grouping (uses L3 cache topology, but typically one group)
-    """
-
-    hwmon_drivers = {"coretemp"}
-
-    def total_temp_label(self):
-        return "Pkg"
-
-    def total_temp_key(self):
-        return "Package id 0"
-
-    def core_temp_map(self):
-        """Parse 'Core N' labels into {core_id: temp_index}."""
-        result = {}
-        for label, ti in self.temp_sensors.items():
-            m = re.match(r"Core (\d+)$", label)
-            if m:
-                result[int(m.group(1))] = ti
-        return result
-
-    def has_per_core_temps(self):
-        return len(self.core_temp_map()) > 0
-
-    def model_short(self):
-        s = self.model
-        for remove in ("(R)", "(TM)", "Processor", "CPU"):
-            s = s.replace(remove, "")
-        s = re.sub(r"\s{2,}", " ", s).strip()
-        if len(s) > 30:
-            s = s[:30]
-        return s
-
-
 # ── Factory ───────────────────────────────────────────────────────────────────
 
 def detect_cpu_engine():
-    """Auto-detect CPU vendor from /proc/cpuinfo and return the right engine."""
+    """Auto-detect CPU vendor from /proc/cpuinfo and return the right engine.
+
+    Vendor engines live in separate files:
+      - PCAmd5950.py   → AmdCpuEngine
+      - PCIntel7960.py → IntelCpuEngine
+    """
     model = ""
     for line in Path("/proc/cpuinfo").read_text().splitlines():
         if line.startswith("model name"):
@@ -227,15 +165,19 @@ def detect_cpu_engine():
 
     model_lower = model.lower()
     if "amd" in model_lower or "ryzen" in model_lower or "epyc" in model_lower:
+        from PCAmd5950 import AmdCpuEngine
         return AmdCpuEngine()
     elif "intel" in model_lower:
+        from PCIntel7960 import IntelCpuEngine
         return IntelCpuEngine()
     # Fallback: try to detect by hwmon driver
     for hwmon_dir in glob.glob("/sys/class/hwmon/hwmon*"):
         name = read_file(f"{hwmon_dir}/name")
         if name == "k10temp":
+            from PCAmd5950 import AmdCpuEngine
             return AmdCpuEngine()
         if name == "coretemp":
+            from PCIntel7960 import IntelCpuEngine
             return IntelCpuEngine()
 
     return CpuEngine()
